@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+
+Sitemap: http://EdwardsBean.github.io/sitemap.xml 

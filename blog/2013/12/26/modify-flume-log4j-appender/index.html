@@ -1,24 +1,97 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Mr Bean's Blog]]></title>
-  <link href="http://EdwardsBean.github.io/atom.xml" rel="self"/>
-  <link href="http://EdwardsBean.github.io/"/>
-  <updated>2013-12-26T11:30:14+08:00</updated>
-  <id>http://EdwardsBean.github.io/</id>
-  <author>
-    <name><![CDATA[EdwardsBean]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>修改Flume Log4j Appender - Mr Bean's Blog</title>
+  <meta name="author" content="EdwardsBean">
 
   
-  <entry>
-    <title type="html"><![CDATA[修改Flume Log4j Appender]]></title>
-    <link href="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender/"/>
-    <updated>2013-12-26T11:20:47+08:00</updated>
-    <id>http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender</id>
-    <content type="html"><![CDATA[<h2>自定义Log4j Appender</h2>
+  <meta name="description" content="自定义Log4j Appender 要修改Flume Log4j Appender的实现，我们先了解一下Log4j Appender是如何自定义的。 自定义log4j appender需要继承log4j公共的基类：AppenderSkeleton 打印日志核心方法：abstract &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mr Bean's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mr Bean's Blog</a></h1>
+  
+    <h2>record something</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:EdwardsBean.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">修改Flume Log4j Appender</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-26T11:20:47+08:00" pubdate data-updated="true">Dec 26<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>自定义Log4j Appender</h2>
 
 <p>要修改Flume Log4j Appender的实现，我们先了解一下Log4j Appender是如何自定义的。</p>
 
@@ -237,20 +310,120 @@ Log4jAppender.append()中添加如下：</p>
 </span><span class='line'> [nd-PC2600/192.168.253.126] FATAL [com.xx.test.Main] java.lang.Exception: error detail
 </span><span class='line'>  at com.xx.test.Main.main(Main.java:35)</span></code></pre></td></tr></table></div></figure>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[My First Blog]]></title>
-    <link href="http://EdwardsBean.github.io/blog/2013/12/24/my-first-blog/"/>
-    <updated>2013-12-24T13:01:34+08:00</updated>
-    <id>http://EdwardsBean.github.io/blog/2013/12/24/my-first-blog</id>
-    <content type="html"><![CDATA[<ul>
-<li>this is content</li>
-<li>测试中文</li>
-</ul>
+</div>
 
-]]></content>
-  </entry>
+
+  <footer>
+    <p class="meta">
+      
   
-</feed>
+
+<span class="byline author vcard">Posted by <span class="fn">EdwardsBean</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-26T11:20:47+08:00" pubdate data-updated="true">Dec 26<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/flume/'>Flume</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender/" data-via="" data-counturl="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/12/24/my-first-blog/" title="Previous Post: My first blog">&laquo; My first blog</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+  <ul id="categories">
+    <li class='category'><a href='/blog/categories/flume/'>Flume (1)</a></li>
+
+  </ul>
+</section><section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/12/26/modify-flume-log4j-appender/">修改Flume Log4j Appender</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/12/24/my-first-blog/">My First Blog</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - EdwardsBean -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

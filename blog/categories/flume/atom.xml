@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Flume | Mr Bean's Blog]]></title>
+  <link href="http://EdwardsBean.github.io/blog/categories/flume/atom.xml" rel="self"/>
+  <link href="http://EdwardsBean.github.io/"/>
+  <updated>2013-12-26T11:30:14+08:00</updated>
+  <id>http://EdwardsBean.github.io/</id>
+  <author>
+    <name><![CDATA[EdwardsBean]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[修改Flume Log4j Appender]]></title>
+    <link href="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender/"/>
+    <updated>2013-12-26T11:20:47+08:00</updated>
+    <id>http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender</id>
+    <content type="html"><![CDATA[<h2>自定义Log4j Appender</h2>
+
+<p>要修改Flume Log4j Appender的实现，我们先了解一下Log4j Appender是如何自定义的。</p>
+
+<p>自定义log4j appender需要继承log4j公共的基类：AppenderSkeleton</p>
+
+<ul>
+<li>打印日志核心方法：abstract protected void append(LoggingEvent event);</li>
+<li>初始化加载资源：public void activateOptions()，默认实现为空</li>
+<li>释放资源：public void close()</li>
+<li>是否需要按格式输出文本：public boolean requiresLayout()</li>
+<li>正常情况下我们只需要覆盖append方法即可。然后就可以在log4j中使用了</li>
+</ul>
+
+
+<p>Demo:</p>
+
+<pre><code>1. import org.apache.log4j.AppenderSkeleton;  
+2. import org.apache.log4j.spi.LoggingEvent;  
+3.   
+4. public class HelloAppender extends AppenderSkeleton {  
+5.   
+6.     private String account ;  
+7.       
+8.     @Override  
+9.     protected void append(LoggingEvent event) {  
+10.         System.out.println("Hello, " + account + " : "+ event.getMessage());  
+11.     }  
+12.   
+13.     @Override  
+14.     public void close() {  
+15.         // TODO Auto-generated method stub  
+16.   
+17.     }  
+18.   
+19.     @Override  
+20.     public boolean requiresLayout() {  
+21.         // TODO Auto-generated method stub  
+22.         return false;  
+23.     }  
+24.   
+25.     public String getAccount() {  
+26.         return account;  
+27.     }  
+28.   
+29.     public void setAccount(String account) {  
+30.         this.account = account;  
+31.     }  
+32. }  
+</code></pre>
+
+<hr />
+
+<pre><code>1. public static void main(String[] args) {  
+2.     Log log = LogFactory.getLog("helloLog") ;  
+3.     log.info("I am ready.") ;  
+4. }  
+</code></pre>
+
+<p><em>log4j.properties 配置</em>
+```
+log4j.logger.helloLog=INFO, hello</p>
+
+<p>log4j.appender.hello=HelloAppender
+log4j.appender.hello.account=World
+```</p>
+
+<p>执行main函数，输出结果
+Hello, World : I am ready.</p>
+
+<h2>修改FLume Log4j Appender</h2>
+
+<h3>Event Header加入appname,hostname,logtype</h3>
+
+<p>由于hostname,logtype是固定不变的。所以直接写死在代码中。appname则用log4j.properties进行配置
+&ndash; appname在log4j.properties中配置,添加：</p>
+
+<p>```</p>
+
+<h1>应用程序名</h1>
+
+<p>log4j.appender.flume.Appname = 91pc
+```</p>
+
+<ul>
+<li>在Log4jAppender类中添加：</li>
+</ul>
+
+
+<p>```
+private String appname;</p>
+
+<p>public String getAppname() {</p>
+
+<pre><code>return appname;
+</code></pre>
+
+<p>}</p>
+
+<p>public void setAppname(String appname) {</p>
+
+<pre><code>this.appname = appname;
+</code></pre>
+
+<p>}
+```</p>
+
+<ul>
+<li>hostname,logtype在Log4jAppender类中添加</li>
+</ul>
+
+
+<p>```</p>
+
+<pre><code>//author:scy
+try {
+    hdrs.put("hostname", InetAddress.getLocalHost()+"");
+} catch (UnknownHostException e1) {
+      String msg = "Cant't get localhost IP";
+      LogLog.error(msg);
+      if (unsafeMode) {
+        return;
+      }
+      throw new FlumeException(msg + " Exception follows.", e1);
+}
+//author:scy Need to alarm(&gt;Info)
+if(event.getLevel().toInt() &gt; 20000){
+    hdrs.put("logtype", "alarm");
+}else{
+    hdrs.put("logtype", "log4j");
+}
+</code></pre>
+
+<p>```</p>
+
+<h3>Flume Log4j Appender添加log4j的异常详细信息</h3>
+
+<p>由于Flume Log4j Appender并没有将Log4j的错误异常栈详细信息封装到Event中，不利于我们的告警系统分析原因。
+Log4jAppender.append()中添加如下：
+```</p>
+
+<pre><code>Event flumeEvent;
+Object message = event.getMessage();
+if (message instanceof GenericRecord) {
+..
+} else {
+  hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
+  //按照log4j.properties配置格式化日志
+  String msg = layout != null ? layout.format(event) : message.toString();
+
+  //author:edwardsbean
+  if(layout.ignoresThrowable()) {
+      String[] s = event.getThrowableStrRep();
+      if (s != null) {
+    int len = s.length;
+    for(int i = 0; i &lt; len; i++) {
+        msg += s[i];
+        msg += Layout.LINE_SEP;
+    }
+    }
+  }
+
+  flumeEvent = EventBuilder.withBody(msg, Charset.forName("UTF8"), hdrs);
+}
+try {
+  rpcClient.append(flumeEvent);
+</code></pre>
+
+<p><code>
+日志接收端就可以接受到日志的详细信息：
+</code>
+ [x] Received &lsquo;2013-12-26 10:38:08 user log detail
+ [nd-PC2600/192.168.253.126] FATAL [com.xx.test.Main] java.lang.Exception: error detail</p>
+
+<pre><code>at com.xx.test.Main.main(Main.java:35)
+</code></pre>
+
+<p>```</p>
+]]></content>
+  </entry>
+  
+</feed>

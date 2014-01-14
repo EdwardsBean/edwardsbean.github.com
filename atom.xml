@@ -4,7 +4,7 @@
   <title><![CDATA[Mr Bean's Blog]]></title>
   <link href="http://EdwardsBean.github.io/atom.xml" rel="self"/>
   <link href="http://EdwardsBean.github.io/"/>
-  <updated>2013-12-26T11:44:33+08:00</updated>
+  <updated>2014-01-14T17:54:41+08:00</updated>
   <id>http://EdwardsBean.github.io/</id>
   <author>
     <name><![CDATA[EdwardsBean]]></name>
@@ -12,6 +12,135 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Flume in Action(1)]]></title>
+    <link href="http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/"/>
+    <updated>2014-01-14T17:10:07+08:00</updated>
+    <id>http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1</id>
+    <content type="html"><![CDATA[<h2>使用Flume Log4j Appender正确的姿势</h2>
+
+<p>我们使用Flume-ng的LoadBalancingLog4jAppender，将线上服务的日志实时传输到日志服务器，转交给告警系统和HDFS做存储。<br/>
+FLume的Log4j Appender必须使用Log4j的异步加载器，否则一旦日志服务器挂掉，将会导致应用服务器宕机。</p>
+
+<h2>使用过程中的坑</h2>
+
+<h4>问题1： Flume Log4j使用异步加载器，日志服务器宕机情况导致业务系统阻塞</h4>
+
+<p>在阅读了Flume的RPC源码以及LoadBalancingLog4jAppender的实现之后，发现问题原来在Log4j的异步加载器AsyncAppender。异步加载器的原理见<a href="http://www.blogbus.com/blackgu-logs/163664173.html">这里</a><br/>
+根本原因是、日志服务器宕机导致消费者消费能力不足，缓冲区满的情况下，AsyncAppender会阻塞程序。设置Blocking=false之后就可以了。</p>
+
+<h4>问题2：Flume Log4j发送大量链接异常日志</h4>
+
+<p>当其中一台日志服务器宕机，其他的日志服务器就会不停的接收到链接异常的日志。明显是重连的时间间隔太短。在LoadBalancingRpcClient中，</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>while (it.hasNext()) {
+</span><span class='line'>  HostInfo host = it.next();
+</span><span class='line'>  try {
+</span><span class='line'>    RpcClient client = getClient(host);
+</span><span class='line'>    client.append(event); 
+</span><span class='line'>    eventSent = true;
+</span><span class='line'>    break;
+</span><span class='line'>  } catch (Exception ex) {
+</span><span class='line'>    selector.informFailure(host); //宕机情况标志该主机异常
+</span><span class='line'>    LOGGER.warn("Failed to send event to host " + host, ex);
+</span><span class='line'>  }
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Flume默认不启用back off,也就是说selector.informFailure(host)这行代码完全没用。简直坑爹。OrderSelector.java:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>  public void informFailure(T failedObject) {
+</span><span class='line'>    //If there is no backoff this method is a no-op.
+</span><span class='line'>    if (!shouldBackOff) {
+</span><span class='line'>      return;
+</span><span class='line'>    }
+</span><span class='line'>    //将该主机暂时移除可用主机列表
+</span><span class='line'>    ...
+</span><span class='line'>    </span></code></pre></td></tr></table></div></figure>
+
+
+<p>所以解决办法：配置max back off</p>
+
+<h4>问题3：Flume Log4j失败重连策略异常</h4>
+
+<p>问题体现在，设置了max back off,重连时间居然一直是2000ms,看了一下它的算法，指数退避算法。在OrderSelector.java的informFailure函数中。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>  public void informFailure(T failedObject) {
+</span><span class='line'>    //If there is no backoff this method is a no-op.
+</span><span class='line'>    if (!shouldBackOff) {
+</span><span class='line'>      return;
+</span><span class='line'>    }
+</span><span class='line'>    FailureState state = stateMap.get(failedObject);
+</span><span class='line'>    long now = System.currentTimeMillis();
+</span><span class='line'>    long delta = now - state.lastFail;
+</span><span class='line'>    long lastBackoffLength = Math.min(maxTimeout, 1000 * (1 &lt;&lt; state.sequentialFails));
+</span><span class='line'>    long allowableDiff = lastBackoffLength + CONSIDER_SEQUENTIAL_RANGE;
+</span><span class='line'>    if (allowableDiff &gt; delta) {
+</span><span class='line'>      if (state.sequentialFails &lt; EXP_BACKOFF_COUNTER_LIMIT) {
+</span><span class='line'>        state.sequentialFails++;
+</span><span class='line'>      }
+</span><span class='line'>    } else {
+</span><span class='line'>      state.sequentialFails = 1;
+</span><span class='line'>    }
+</span><span class='line'>    state.lastFail = now;
+</span><span class='line'>    //Depending on the number of sequential failures this component had, delay
+</span><span class='line'>    //its restore time. Each time it fails, delay the restore by 1000 ms,
+</span><span class='line'>    //until the maxTimeOut is reached.
+</span><span class='line'>    state.restoreTime = now + Math.min(maxTimeout, 1000 * (1 &lt;&lt; state.sequentialFails));
+</span><span class='line'>  }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最后生成的restoreTime即下一次进行重试的时间。我没有去设置avro connect time out 和request time out，默认都是20s,应该算是偏长了。根据他的算法，delta永远是大于40s，但是allowableDiff却一直是3s,4s.所以我直接改了判定条件，allowableDiff &lt; delta,之后就正常。但是还存在一个问题，sequentialFails并不会在一段时间后reset.</p>
+
+<h3>问题4：Log4j异步加载器丢失日志数据</h3>
+
+<p>AsyncAppender默认缓冲区大小128，满了之后会丢失数据。调大缓冲区，avro connect time out 和request time out也得适当调一下</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[修改Flume Log4j Appender]]></title>

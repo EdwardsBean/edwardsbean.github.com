@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Mr Bean's Blog</title>
+  <title>Flume in Action(1) - Mr Bean's Blog</title>
   <meta name="author" content="EdwardsBean">
 
   
@@ -19,7 +19,7 @@ FLume的Log4j Appender必须使用Log4j的异步加载器， &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://EdwardsBean.github.io">
+  <link rel="canonical" href="http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Mr Bean's Blog" type="application/atom+xml">
@@ -64,15 +64,12 @@ FLume的Log4j Appender必须使用Log4j的异步加载器， &hellip;">
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2014/01/14/flume-in-action-1/">Flume in Action(1)</a></h1>
+      <h1 class="entry-title">Flume in Action(1)</h1>
     
     
       <p class="meta">
@@ -90,15 +87,15 @@ FLume的Log4j Appender必须使用Log4j的异步加载器， &hellip;">
 
 <time datetime="2014-01-14T17:10:07+08:00" pubdate data-updated="true">Jan 14<span>th</span>, 2014</time>
         
-           | <a href="/blog/2014/01/14/flume-in-action-1/#disqus_thread"
-             data-disqus-identifier="http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://EdwardsBean.github.io">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h2>使用Flume Log4j Appender正确的姿势</h2>
+<div class="entry-content"><h2>使用Flume Log4j Appender正确的姿势</h2>
 
 <p>我们使用Flume-ng的LoadBalancingLog4jAppender，将线上服务的日志实时传输到日志服务器，转交给告警系统和HDFS做存储。<br/>
 FLume的Log4j Appender必须使用Log4j的异步加载器，否则一旦日志服务器挂掉，将会导致应用服务器宕机。</p>
@@ -220,279 +217,16 @@ FLume的Log4j Appender必须使用Log4j的异步加载器，否则一旦日志�
 
 <p>AsyncAppender默认缓冲区大小128，满了之后会丢失数据。调大缓冲区，avro connect time out 和request time out也得适当调一下</p>
 </div>
-  
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/26/modify-flume-log4j-appender/">修改Flume Log4j Appender</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
   
 
+<span class="byline author vcard">Posted by <span class="fn">EdwardsBean</span></span>
 
-<time datetime="2013-12-26T11:20:47+08:00" pubdate data-updated="true">Dec 26<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/12/26/modify-flume-log4j-appender/#disqus_thread"
-             data-disqus-identifier="http://EdwardsBean.github.io/blog/2013/12/26/modify-flume-log4j-appender/">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2>自定义Log4j Appender</h2>
-
-<p>要修改Flume Log4j Appender的实现，我们先了解一下Log4j Appender是如何自定义的。</p>
-
-<p>自定义log4j appender需要继承log4j公共的基类：AppenderSkeleton</p>
-
-<ul>
-<li>打印日志核心方法：abstract protected void append(LoggingEvent event);</li>
-<li>初始化加载资源：public void activateOptions()，默认实现为空</li>
-<li>释放资源：public void close()</li>
-<li>是否需要按格式输出文本：public boolean requiresLayout()</li>
-<li>正常情况下我们只需要覆盖append方法即可。然后就可以在log4j中使用了</li>
-</ul>
-
-
-<p>Demo:</p>
-
-<pre><code>1. import org.apache.log4j.AppenderSkeleton;  
-2. import org.apache.log4j.spi.LoggingEvent;  
-3.   
-4. public class HelloAppender extends AppenderSkeleton {  
-5.   
-6.     private String account ;  
-7.       
-8.     @Override  
-9.     protected void append(LoggingEvent event) {  
-10.         System.out.println("Hello, " + account + " : "+ event.getMessage());  
-11.     }  
-12.   
-13.     @Override  
-14.     public void close() {  
-15.         // TODO Auto-generated method stub  
-16.   
-17.     }  
-18.   
-19.     @Override  
-20.     public boolean requiresLayout() {  
-21.         // TODO Auto-generated method stub  
-22.         return false;  
-23.     }  
-24.   
-25.     public String getAccount() {  
-26.         return account;  
-27.     }  
-28.   
-29.     public void setAccount(String account) {  
-30.         this.account = account;  
-31.     }  
-32. }  
-</code></pre>
-
-<hr />
-
-<pre><code>1. public static void main(String[] args) {  
-2.     Log log = LogFactory.getLog("helloLog") ;  
-3.     log.info("I am ready.") ;  
-4. }  
-</code></pre>
-
-<p><em>log4j.properties 配置</em></p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>log4j.logger.helloLog=INFO, hello
-</span><span class='line'>
-</span><span class='line'>log4j.appender.hello=HelloAppender
-</span><span class='line'>log4j.appender.hello.account=World</span></code></pre></td></tr></table></div></figure>
-
-
-<p>执行main函数，输出结果
-Hello, World : I am ready.</p>
-
-<h2>修改FLume Log4j Appender</h2>
-
-<h3>Event Header加入appname,hostname,logtype</h3>
-
-<p>由于hostname,logtype是固定不变的。所以直接写死在代码中。appname则用log4j.properties进行配置
-&ndash; appname在log4j.properties中配置,添加：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>#应用程序名
-</span><span class='line'>log4j.appender.flume.Appname = 91pc</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>在Log4jAppender类中添加：</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>private String appname;
-</span><span class='line'>
-</span><span class='line'>public String getAppname() {
-</span><span class='line'>  return appname;
-</span><span class='line'>}
-</span><span class='line'>
-</span><span class='line'>public void setAppname(String appname) {
-</span><span class='line'>  this.appname = appname;
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<ul>
-<li>hostname,logtype在Log4jAppender类中添加</li>
-</ul>
-
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>//author:scy
-</span><span class='line'>try {
-</span><span class='line'>  hdrs.put("hostname", InetAddress.getLocalHost()+"");
-</span><span class='line'>} catch (UnknownHostException e1) {
-</span><span class='line'>      String msg = "Cant't get localhost IP";
-</span><span class='line'>      LogLog.error(msg);
-</span><span class='line'>      if (unsafeMode) {
-</span><span class='line'>        return;
-</span><span class='line'>      }
-</span><span class='line'>      throw new FlumeException(msg + " Exception follows.", e1);
-</span><span class='line'>}
-</span><span class='line'>//author:scy Need to alarm(&gt;Info)
-</span><span class='line'>if(event.getLevel().toInt() &gt; 20000){
-</span><span class='line'>  hdrs.put("logtype", "alarm");
-</span><span class='line'>}else{
-</span><span class='line'>  hdrs.put("logtype", "log4j");
-</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
-
-
-<h3>Flume Log4j Appender添加log4j的异常详细信息</h3>
-
-<p>由于Flume Log4j Appender并没有将Log4j的错误异常栈详细信息封装到Event中，不利于我们的告警系统分析原因。
-Log4jAppender.append()中添加如下：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>Event flumeEvent;
-</span><span class='line'>Object message = event.getMessage();
-</span><span class='line'>if (message instanceof GenericRecord) {
-</span><span class='line'>..
-</span><span class='line'>} else {
-</span><span class='line'>  hdrs.put(Log4jAvroHeaders.MESSAGE_ENCODING.toString(), "UTF8");
-</span><span class='line'>  //按照log4j.properties配置格式化日志
-</span><span class='line'>  String msg = layout != null ? layout.format(event) : message.toString();
-</span><span class='line'>        
-</span><span class='line'>  //author:edwardsbean
-</span><span class='line'>  if(layout.ignoresThrowable()) {
-</span><span class='line'>      String[] s = event.getThrowableStrRep();
-</span><span class='line'>      if (s != null) {
-</span><span class='line'>  int len = s.length;
-</span><span class='line'>  for(int i = 0; i &lt; len; i++) {
-</span><span class='line'>      msg += s[i];
-</span><span class='line'>      msg += Layout.LINE_SEP;
-</span><span class='line'>  }
-</span><span class='line'>    }
-</span><span class='line'>  }
-</span><span class='line'>  
-</span><span class='line'>  flumeEvent = EventBuilder.withBody(msg, Charset.forName("UTF8"), hdrs);
-</span><span class='line'>}
-</span><span class='line'>try {
-</span><span class='line'>  rpcClient.append(flumeEvent);</span></code></pre></td></tr></table></div></figure>
-
-
-<p>日志接收端就可以接受到日志的详细信息：</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'> [x] Received '2013-12-26 10:38:08 user log detail
-</span><span class='line'> [nd-PC2600/192.168.253.126] FATAL [com.xx.test.Main] java.lang.Exception: error detail
-</span><span class='line'>  at com.xx.test.Main.main(Main.java:35)</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2013/12/24/my-first-blog/">My First Blog</a></h1>
-    
-    
-      <p class="meta">
-        
 
 
 
@@ -504,34 +238,38 @@ Log4jAppender.append()中添加如下：</p>
   
 
 
-<time datetime="2013-12-24T13:01:34+08:00" pubdate data-updated="true">Dec 24<span>th</span>, 2013</time>
-        
-           | <a href="/blog/2013/12/24/my-first-blog/#disqus_thread"
-             data-disqus-identifier="http://EdwardsBean.github.io/blog/2013/12/24/my-first-blog/">Comments</a>
-        
-      </p>
+<time datetime="2014-01-14T17:10:07+08:00" pubdate data-updated="true">Jan 14<span>th</span>, 2014</time>
+      
+
+
+    </p>
     
-  </header>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/" data-via="" data-counturl="http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/" >Tweet</a>
+  
+  
+  
+</div>
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/12/26/modify-flume-log4j-appender/" title="Previous Post: 修改Flume Log4j Appender">&laquo; 修改Flume Log4j Appender</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-  <div class="entry-content"><ul>
-<li>this is content</li>
-<li>测试中文</li>
-</ul>
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
-  
-  
 
-
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
-</div>
 <aside class="sidebar">
   
     <section>
@@ -566,6 +304,7 @@ Log4jAppender.append()中添加如下：</p>
   
 </aside>
 
+
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -580,7 +319,10 @@ Log4jAppender.append()中添加如下：</p>
       var disqus_shortname = 'edwardsbean';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/';
+        var disqus_url = 'http://EdwardsBean.github.io/blog/2014/01/14/flume-in-action-1/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
